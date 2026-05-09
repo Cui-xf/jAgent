@@ -1,0 +1,46 @@
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  application:
+    name: jAgent
+  ai:
+    openai:
+      # === opencode zen（默认，含多个免费模型）===
+      # 文档：https://opencode.ai/docs/zen/
+      # 完整端点 = base-url + /v1/chat/completions → https://opencode.ai/zen/v1/chat/completions
+      api-key: ${OPENCODE_ZEN_API_KEY:${OPENAI_API_KEY:sk-xxx}}
+      base-url: ${OPENAI_BASE_URL:https://opencode.ai/zen}
+      chat:
+        options:
+          # opencode zen 免费模型可选：
+          #   big-pickle / minimax-m2.5-free / ling-2.6-flash / hy3-preview-free / nemotron-3-super-free
+          model: ${OPENAI_MODEL:minimax-m2.5-free}
+          temperature: 0.2
+
+jagent:
+  skills:
+    # 逗号分隔；路径前导 `~` 会被展开为 $HOME；启动与 /reload 都会重新扫描。
+    # 扫描顺序：用户级（~/.agents/skills）→ 项目级（./skills），同名时后者覆盖前者。
+    paths: ${JAGENT_SKILLS:~/.agents/skills,./skills}
+  shell:
+    # 若设为 true，则允许模型执行任意命令（危险！仅在可信环境用）
+    allow-all: true
+    # 命令白名单（allow-all=false 时生效）
+    allow-list: ls,pwd,cat,echo,grep,find,wc,head,tail,git,uname,whoami,date,which,env,ps,df,du,tree
+    timeout-seconds: 30
+    # 默认工作目录
+    working-dir: ${user.home}
+  debug:
+    # 开启后会在 Spring AI 的 RestClient 上挂拦截器，用 INFO 级别打印真正发到模型的
+    # HTTP 请求/响应原文（URL、Header、JSON body，Authorization 会脱敏）
+    log-http: ${JAGENT_LOG_HTTP:false}
+    # body 打印的最大字节数，避免刷屏
+    log-http-body-max: 8192
+
+logging:
+  level:
+    root: WARN
+    com.example.jagent: INFO
+    jagent.http: INFO                      # HTTP 原文打印器
+    org.springframework.ai: WARN           # Spring AI 其它层面日志关闭
